@@ -132,11 +132,74 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Mobile Responsiveness
     // Close sidebar when clicking outside on mobile (simplified)
+    // Mobile Responsiveness
+    // Close sidebar when clicking outside on mobile (simplified)
     document.addEventListener('click', (e) => {
         if (window.innerWidth <= 768) {
-            if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target) && sidebar.classList.contains('mobile-open')) {
+            const isClickInsideSidebar = sidebar.contains(e.target);
+            const isClickOnDesktopToggle = sidebarToggle && sidebarToggle.contains(e.target);
+            const isClickOnMobileToggle = mobileMenuBtn && mobileMenuBtn.contains(e.target);
+
+            if (!isClickInsideSidebar && !isClickOnDesktopToggle && !isClickOnMobileToggle && sidebar.classList.contains('mobile-open')) {
                 sidebar.classList.remove('mobile-open');
             }
+        }
+    });
+
+    // Animation Logic
+    const animatedElements = document.querySelectorAll('.stat-card, .chart-card, .table-section, .report-container, .settings-section, .profile-header-card, .detail-card');
+    
+    // Add initial hidden state
+    animatedElements.forEach((el, index) => {
+        el.classList.add('scroll-hidden');
+        // Add staggered delay for initial view
+        if (index < 6) {
+            el.style.transitionDelay = `${index * 100}ms`;
+        }
+    });
+
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('scroll-visible');
+                observer.unobserve(entry.target); // Only animate once
+            }
+        });
+    }, observerOptions);
+
+    animatedElements.forEach(el => {
+        observer.observe(el);
+    });
+
+    // Add click listeners to nav links to reset animations for the new view
+    const navLinks = [dashboardLink, reportsLink, settingsLink, profileLink];
+    navLinks.forEach(link => {
+        if(link) {
+            link.addEventListener('click', () => {
+                setTimeout(() => {
+                    const activeView = document.querySelector('.content-view[style="display: block;"]');
+                    if (activeView) {
+                        const elements = activeView.querySelectorAll('.stat-card, .chart-card, .table-section, .report-container, .settings-section, .profile-header-card, .detail-card');
+                        elements.forEach((el, index) => {
+                            el.classList.remove('scroll-visible');
+                            el.classList.add('scroll-hidden');
+                            
+                            // Force reflow
+                            void el.offsetWidth;
+                            
+                            // Reset delay for staggered effect
+                            el.style.transitionDelay = `${index * 100}ms`;
+                            
+                            el.classList.add('scroll-visible');
+                        });
+                    }
+                }, 50);
+            });
         }
     });
 });
